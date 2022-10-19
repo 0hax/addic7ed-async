@@ -1,4 +1,4 @@
-# created by virtualenv automatically
 pyvenv.cfg
 bin/*
 lib/*
+addic7ed_async/__pycache__/
