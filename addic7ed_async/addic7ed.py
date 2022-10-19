@@ -52,7 +52,10 @@ class Addic7ed(object):
     async def get_show_from_name(self, name):
         shows = await self.get_all_shows()
         for show in shows:
-            if re.match(f'.*{name}.*', show.name, re.IGNORECASE):
+            # Remove any weird character like ' in "The Handmaid's Tale"
+            if re.match(f'.*{name}.*',
+                        re.sub(r'[^A-Za-z0-9 ]', '', show.name),
+                        re.IGNORECASE):
                 return show
         # TODO retry without cache?
         # flush_cache('addict7ed.html')
