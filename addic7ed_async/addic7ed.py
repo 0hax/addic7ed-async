@@ -180,7 +180,7 @@ class Addic7ed(object):
         headers = {'Referer': download_url,
                    'User-Agent': 'Mozilla/5.0 (X11; U; Linux x86_64; en-US; rv:1.9.1.3)'}
         async with self._session.get(download_url, headers=headers) as resp:
-            data = await resp.text()
+            data = await resp.read()
             return data
 
     async def download_subtitle(self, show_name: str, season_number: int,

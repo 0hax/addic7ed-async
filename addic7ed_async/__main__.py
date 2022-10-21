@@ -27,7 +27,7 @@ async def main():
                             language=args.language,
                             prefered_version=guess['release_group']
                       )
-            with open(os.path.splitext(tvshow)[0] + '.srt', 'w') as f:
+            with open(os.path.splitext(tvshow)[0] + '.srt', 'wb') as f:
                 f.write(subtitle)
 
 if __name__ == "__main__":
