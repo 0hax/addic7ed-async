@@ -2,8 +2,9 @@ import argparse
 import asyncio
 import ffmpeg
 import os
-from aiohttp import ClientSession
+from aiohttp_client_cache import CachedSession, FileBackend
 from addic7ed import Addic7ed
+from datetime import timedelta
 from guessit import guessit
 
 
@@ -27,7 +28,11 @@ async def get_available_subtitles_from_file(tvshow):
 
 async def main():
     args = parse_args()
-    async with ClientSession() as session:
+    # TODO Add flush cache option and recommend it in case of exception
+    # 1 day for clearing is ok.
+    cache = FileBackend(cache_name='.addic7ed_cache',
+                        expire_after=timedelta(days=1))
+    async with CachedSession(cache=cache) as session:
         for tvshow in args.tvshows:
             available_subtitles = await get_available_subtitles_from_file(tvshow)
             if args.language in available_subtitles:

@@ -3,23 +3,6 @@ from collections import namedtuple
 import os
 import re
 
-# TODO this somewhere else.
-CACHE_DIR = '/tmp'
-def cache_request(page_name):
-    # TODO Add expiry time
-    def decorator(func):
-        async def wrapper(*args, **kwargs):
-            page_cache = os.path.join(CACHE_DIR, page_name)
-            if os.path.exists(page_cache):
-                with open(page_cache, 'r') as f:
-                    return f.read()
-            data = await func(*args, **kwargs)
-            with open(page_cache, 'w') as f:
-                f.write(data)
-            return data
-        return wrapper
-    return decorator
-
 
 Addic7edShow = namedtuple('Addic7edShow', ['name', 'id'])
 Addic7edEpisode = namedtuple('Addic7edEpisode', ['number', 'name'])
@@ -34,7 +17,6 @@ class Addic7ed(object):
         self._url = ADDIC7ED_URL
         self._session = session
 
-    @cache_request('addic7ed.html')
     async def get_main_page(self):
         async with self._session.get(self._url) as resp:
             data = await resp.text()
