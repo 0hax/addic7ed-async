@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 from collections import namedtuple
 import os
+import pprint
 import re
 
 
@@ -180,6 +181,11 @@ class Addic7ed(object):
             matching_subtitle = subtitle
             break
         if not matching_subtitle:
-            raise Exception("Can't find a matching subtitle")
+            print("""Can't find matching subtitle for {} S{:02d}E{:02d}
+Availables:\n
+{}
+""".format(show_name, season_number, episode_number, pprint.pformat(subtitles))
+            )
+            return None
         # TODO Use StringIO?
         return await self.get_subtitle(subtitle)
