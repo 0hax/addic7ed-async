@@ -33,6 +33,8 @@ def parse_args():
     parser.add_argument('--check-embedded-subtitles', '-c',
                         help='check if language is already embedded in the file',
                         default=True)
+    parser.add_argument('--force', '-f', help='override existing subtitles',
+                        default=False)
     parser.add_argument('tvshows', nargs='+')
     return parser.parse_args()
 
@@ -79,13 +81,18 @@ async def main():
 
             addicted = Addic7ed(session)
             guess = guessit(tvshow)
-            # TODO check if srtfile exists already, add -f option?
+            srt_file = os.path.splitext(tvshow)[0] + '.srt'
+            if os.path.exists(srt_file) and not args.force:
+                print("Local subtitle already present for f{tvshow} at f{srt_file}")
+                continue
             subtitle = await addicted.download_subtitle(
                             guess['title'], guess['season'], guess['episode'],
                             language=args.language,
                             prefered_version=guess['release_group']
                       )
-            with open(os.path.splitext(tvshow)[0] + '.srt', 'wb') as f:
+            if not subtitle:
+                continue
+            with open(srt_file, 'wb') as f:
                 f.write(subtitle)
 
 if __name__ == "__main__":
