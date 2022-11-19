@@ -10,8 +10,26 @@ from guessit import guessit
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--language', '-l', default='en',
-                        help='language used to download subtitles')
+    parser.add_argument('--language', '-l',
+                        help='language used to download subtitles',
+                        choices=['Arabic',
+                                 'Catala',
+                                 'English',
+                                 'Euskera',
+                                 'French',
+                                 'Galician',
+                                 'German',
+                                 'Greek',
+                                 'Hungarian',
+                                 'Italian',
+                                 'Persian',
+                                 'Polish',
+                                 'Portuguese',
+                                 'Romanian',
+                                 'Russian',
+                                 'Spanish',
+                                 'Swedish',
+                                 ])
     parser.add_argument('--check-embedded-subtitles', '-c',
                         help='check if language is already embedded in the file',
                         default=True)
