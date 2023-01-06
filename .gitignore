@@ -4,3 +4,4 @@ lib/*
 addic7ed_async/__pycache__/
 .addic7ed_cache/*
 redirects.sqlite
+*.pyc
