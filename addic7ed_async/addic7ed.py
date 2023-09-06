@@ -65,15 +65,26 @@ class Addic7ed(object):
         the matching show.
         """
         shows = await self.get_all_shows()
+        # First pass with an exact match minus special characters.
+        for show in shows:
+            # Remove any weird character like ' in "The Handmaid's Tale"
+            if re.match(f'^{name}$',
+                        re.sub(r'[^A-Za-z0-9 ]', '', show.name),
+                        re.IGNORECASE):
+                return show
+
+        # First pass with a loose match minus special characters.
         for show in shows:
             # Remove any weird character like ' in "The Handmaid's Tale"
             if re.match(f'.*{name}.*',
                         re.sub(r'[^A-Za-z0-9 ]', '', show.name),
                         re.IGNORECASE):
                 return show
+
         # TODO retry without cache?
         # flush_cache('addict7ed.html')
         raise Exception(f'Show {name} not found')
+
 
     # TODO add show_id in cache request
     async def get_seasons_page(self, show):
