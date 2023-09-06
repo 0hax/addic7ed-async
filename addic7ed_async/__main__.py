@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+from asyncio import gather, create_task
 import pprint
 import os
 from aiohttp_client_cache import CachedSession, FileBackend
@@ -34,7 +35,7 @@ def parse_args():
     parser.add_argument(
             '--check-embedded-subtitles', '-c',
             help='check if language is already embedded in the file',
-            default=True)
+            default=False)
     parser.add_argument(
             '--force', '-f',
             help='override existing subtitles',
@@ -43,38 +44,44 @@ def parse_args():
 
     return parser.parse_args()
 
+async def download_one_subtitle(args, session, tvshow):
+    if args.check_embedded_subtitles:
+        embedded_langs = await get_sub_lang_from_file(tvshow)
+        print(
+            'Available subtitle languages embedded in the file:\n {}'.
+            format(pprint.pformat(embedded_langs))
+        )
+        if await lang_in_list(embedded_langs, args.language):
+            print(f'{args.language} Subtitle already embedded in {tvshow}')
+            return
+
+    # TODO check if subtitle is synced using some lib
+    # TODO support saving multiple subtitles languages .fr.srt ?
+    addicted = Addic7ed(session)
+    guess = guessit(tvshow)
+    srt_file = os.path.splitext(tvshow)[0] + '.srt'
+    if os.path.exists(srt_file) and not args.force:
+        print(f"Local subtitle already present for {tvshow} at {srt_file}")
+        return
+    # TODO handle when prefered_version is not found.
+    #  Add a way to override it?
+    subtitle = await addicted.download_subtitle(
+                    guess['title'], guess['season'], guess['episode'],
+                    language=args.language,
+                    prefered_version=guess['release_group']
+              )
+    if not subtitle:
+        return
+    print(f'Subtitle downloaded for {tvshow}')
+    with open(srt_file, 'wb') as f:
+        f.write(subtitle)
+
 
 async def download_subtitles(args, session):
-    for tvshow in args.tvshows:
-        if args.check_embedded_subtitles:
-            embedded_langs = await get_sub_lang_from_file(tvshow)
-            print(
-                'Available subtitle languages embedded in the file:\n {}'.
-                format(pprint.pformat(embedded_langs))
-            )
-            if await lang_in_list(embedded_langs, args.language):
-                print(f'{args.language} Subtitle already embedded in {tvshow}')
-                continue
-
-        # TODO check if subtitle is synced using some lib
-        # TODO support saving multiple subtitles languages .fr.srt ?
-        addicted = Addic7ed(session)
-        guess = guessit(tvshow)
-        srt_file = os.path.splitext(tvshow)[0] + '.srt'
-        if os.path.exists(srt_file) and not args.force:
-            print(f"Local subtitle already present for {tvshow} at {srt_file}")
-            continue
-        # TODO handle when prefered_version is not found.
-        #  Add a way to override it?
-        subtitle = await addicted.download_subtitle(
-                        guess['title'], guess['season'], guess['episode'],
-                        language=args.language,
-                        prefered_version=guess['release_group']
-                  )
-        if not subtitle:
-            continue
-        with open(srt_file, 'wb') as f:
-            f.write(subtitle)
+    # Create a task for each tvshow
+    tasks = [asyncio.create_task(download_one_subtitle(args, session, tvshow))
+             for tvshow in args.tvshows]
+    await gather(*tasks)
 
 
 async def main():
