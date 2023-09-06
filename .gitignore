@@ -1,7 +1,15 @@
-pyvenv.cfg
-bin/*
-lib/*
 addic7ed_async/__pycache__/
 .addic7ed_cache/*
 redirects.sqlite
-*.pyc
+
+# Byte-compiled / optimized / DLL files
+*.py[cod]
+
+# Distribution / packaging
+build/
+lib/*
+
+# Environments
+#pyvenv.cfg
+#bin/*
+
