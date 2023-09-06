@@ -21,4 +21,4 @@ Using a virtualenv is recommended. Installation can done using:
 ### CLI Usage
 
 ### Library usage
-
+python -m build .

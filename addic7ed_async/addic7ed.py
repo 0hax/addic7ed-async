@@ -1,8 +1,19 @@
 from bs4 import BeautifulSoup
 from collections import namedtuple
+from typing import List
 import os
 import pprint
 import re
+
+# TODO this somewhere else.
+# async lru
+# https://github.com/aio-libs/async-lru
+# https://github.com/requests-cache/aiohttp-client-cache
+# https://github.com/pydanny/cached-property
+# https://github.com/youknowone/ring/
+# 
+# loguru for logging
+
 
 
 Addic7edShow = namedtuple('Addic7edShow', ['name', 'id'])
@@ -12,6 +23,7 @@ Addic7edSubtitle = namedtuple('Addic7edSubtitle', ['version',
                                                    'download'])
 
 ADDIC7ED_URL = 'https://www.addic7ed.com/'
+
 
 class Addic7ed(object):
     def __init__(self, session):
@@ -23,7 +35,22 @@ class Addic7ed(object):
             data = await resp.text()
             return data
 
-    async def get_all_shows(self):
+    async def get_all_possible_languages(self):
+        """
+        Get all available subtitle languages used on addict7ed.
+        It's not 100% correct as it's retrieving the list of languages of the
+        website itself. But it doesn't look too far from the available
+        languages for subtitles.
+        """
+        data = await self.get_main_page()
+        soup = BeautifulSoup(data, 'html5lib')
+        langs = soup.find(id='comboLang')
+        return [lang.string for lang in langs]
+
+    async def get_all_shows(self) -> List[Addic7edShow]:
+        """
+        Get all available TVShows for which there is subtitles.
+        """
         data = await self.get_main_page()
         soup = BeautifulSoup(data, 'html5lib')
         qsShow = soup.find(id='qsShow')
@@ -32,7 +59,11 @@ class Addic7ed(object):
                  for option in options]
         return shows
 
-    async def get_show_from_name(self, name):
+    async def get_show_from_name(self, name) -> Addic7edShow:
+        """
+        Given a show name, return an Addic7edShow namedtuple corresponding to
+        the matching show.
+        """
         shows = await self.get_all_shows()
         for show in shows:
             # Remove any weird character like ' in "The Handmaid's Tale"
@@ -120,7 +151,7 @@ class Addic7ed(object):
         for episode in episodes:
             if episode.number == number:
                 return episode
-        raise Exception("Episode not found")
+        raise Exception("No subtitles available for this episode.")
 
     async def get_subtitles_page(self, show, season, episode):
         # Replace ' ' by '_'
@@ -176,7 +207,8 @@ class Addic7ed(object):
         for subtitle in subtitles:
             if subtitle.language != language:
                 continue
-            if prefered_version not in subtitle.version:
+            if prefered_version and \
+               prefered_version not in subtitle.version:
                 continue
             matching_subtitle = subtitle
             break

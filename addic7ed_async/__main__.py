@@ -1,9 +1,10 @@
 import argparse
 import asyncio
+import pprint
 import os
-import re
 from aiohttp_client_cache import CachedSession, FileBackend
-from addic7ed import Addic7ed
+from .addic7ed import Addic7ed
+from .helpers import lang_in_list, get_sub_lang_from_file
 from datetime import timedelta
 from guessit import guessit
 
@@ -30,39 +31,50 @@ def parse_args():
                                  'Spanish',
                                  'Swedish',
                                  ])
-    parser.add_argument('--check-embedded-subtitles', '-c',
-                        help='check if language is already embedded in the file',
-                        default=True)
-    parser.add_argument('--force', '-f', help='override existing subtitles',
-                        default=False)
+    parser.add_argument(
+            '--check-embedded-subtitles', '-c',
+            help='check if language is already embedded in the file',
+            default=True)
+    parser.add_argument(
+            '--force', '-f',
+            help='override existing subtitles',
+            default=False)
     parser.add_argument('tvshows', nargs='+')
+
     return parser.parse_args()
 
 
-async def get_sub_lang_from_file(tvshow):
-    try:
-        import ffmpeg
-    except ImportError:
-        return []
-    streams = ffmpeg.probe(tvshow)['streams']
-    languages = list()
-    for stream in streams:
-        if stream['codec_name'] != 'subrip':
-            continue
-        if not stream.get('tags'):
-            continue
-        languages.append(stream['tags']['language'])
-    return languages
+async def download_subtitles(args, session):
+    for tvshow in args.tvshows:
+        if args.check_embedded_subtitles:
+            embedded_langs = await get_sub_lang_from_file(tvshow)
+            print(
+                'Available subtitle languages embedded in the file:\n {}'.
+                format(pprint.pformat(embedded_langs))
+            )
+            if await lang_in_list(embedded_langs, args.language):
+                print(f'{args.language} Subtitle already embedded in {tvshow}')
+                continue
 
-
-async def embedded_langs_match(embedded_langs, requested_lang):
-    for lang in embedded_langs:
-        # Usually 2 first letters are enough to match against ISO
-        # 3166-2 standards.
-        if re.match(r"{}?".format(requested_lang[0:2]),
-                    lang, re.IGNORECASE):
-            return True
-    return False
+        # TODO check if subtitle is synced using some lib
+        # TODO support saving multiple subtitles languages .fr.srt ?
+        addicted = Addic7ed(session)
+        guess = guessit(tvshow)
+        srt_file = os.path.splitext(tvshow)[0] + '.srt'
+        if os.path.exists(srt_file) and not args.force:
+            print(f"Local subtitle already present for {tvshow} at {srt_file}")
+            continue
+        # TODO handle when prefered_version is not found.
+        #  Add a way to override it?
+        subtitle = await addicted.download_subtitle(
+                        guess['title'], guess['season'], guess['episode'],
+                        language=args.language,
+                        prefered_version=guess['release_group']
+                  )
+        if not subtitle:
+            continue
+        with open(srt_file, 'wb') as f:
+            f.write(subtitle)
 
 
 async def main():
@@ -72,28 +84,8 @@ async def main():
     cache = FileBackend(cache_name='.addic7ed_cache',
                         expire_after=timedelta(days=1))
     async with CachedSession(cache=cache) as session:
-        for tvshow in args.tvshows:
-            if args.check_embedded_subtitles:
-                embedded_langs = await get_sub_lang_from_file(tvshow)
-                if await embedded_langs_match(embedded_langs, args.language):
-                    print(f'{args.language} Subtitle already present in {tvshow}')
-                    continue
+        await download_subtitles(args, session)
 
-            addicted = Addic7ed(session)
-            guess = guessit(tvshow)
-            srt_file = os.path.splitext(tvshow)[0] + '.srt'
-            if os.path.exists(srt_file) and not args.force:
-                print("Local subtitle already present for f{tvshow} at f{srt_file}")
-                continue
-            subtitle = await addicted.download_subtitle(
-                            guess['title'], guess['season'], guess['episode'],
-                            language=args.language,
-                            prefered_version=guess['release_group']
-                      )
-            if not subtitle:
-                continue
-            with open(srt_file, 'wb') as f:
-                f.write(subtitle)
 
 if __name__ == "__main__":
     asyncio.run(main())
