@@ -31,9 +31,8 @@ class Addic7ed(object):
         self._session = session
 
     async def get_main_page(self):
-        async with self._session.get(self._url) as resp:
-            data = await resp.text()
-            return data
+        response = await self._session.get(self._url)
+        return await response.text()
 
     async def get_all_possible_languages(self):
         """
@@ -73,7 +72,7 @@ class Addic7ed(object):
                         re.IGNORECASE):
                 return show
 
-        # First pass with a loose match minus special characters.
+        # Second pass with a loose match minus special characters.
         for show in shows:
             # Remove any weird character like ' in "The Handmaid's Tale"
             if re.match(f'.*{name}.*',
@@ -90,9 +89,8 @@ class Addic7ed(object):
     async def get_seasons_page(self, show):
         season_url = os.path.join(self._url,
                                   f'ajax_getSeasons.php?showID={show.id}')
-        async with self._session.get(season_url) as resp:
-            data = await resp.text()
-        return data
+        response = await self._session.get(season_url)
+        return await response.text()
 
     async def list_seasons(self, show):
         # <select id="qsiSeason" name="qsiSeason" onchange="seasonChange(6265,-1);">
@@ -122,9 +120,8 @@ class Addic7ed(object):
                 self._url,
                 f'ajax_getEpisodes.php?showID={show.id}&season={season}'
             )
-        async with self._session.get(episode_url) as resp:
-            data = await resp.text()
-        return data
+        response = await self._session.get(episode_url)
+        return await response.text()
 
     async def list_episodes(self, show, season):
         data = await self.get_episodes_page(show, season)
@@ -173,9 +170,8 @@ class Addic7ed(object):
             str(episode.number),
             episode.name.replace(' ', '_')
         )
-        async with self._session.get(subtitles_url) as resp:
-            data = await resp.text()
-        return data
+        response = await self._session.get(subtitles_url)
+        return await response.text()
 
     async def list_subtitles(self, show: Addic7edShow,
                              season: int,
@@ -204,9 +200,8 @@ class Addic7ed(object):
         download_url = os.path.join(self._url, subtitle.download.lstrip('/'))
         headers = {'Referer': download_url,
                    'User-Agent': 'Mozilla/5.0 (X11; U; Linux x86_64; en-US; rv:1.9.1.3)'}
-        async with self._session.get(download_url, headers=headers) as resp:
-            data = await resp.read()
-            return data
+        response = await self._session.get(download_url, headers=headers)
+        return await response.read()
 
     async def download_subtitle(self, show_name: str, season_number: int,
                                 episode_number: int, language='French',
@@ -230,5 +225,4 @@ Availables:\n
 """.format(show_name, season_number, episode_number, pprint.pformat(subtitles))
             )
             return None
-        # TODO Use StringIO?
         return await self.get_subtitle(subtitle)

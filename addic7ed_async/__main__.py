@@ -1,6 +1,5 @@
 import argparse
 import asyncio
-from asyncio import gather, create_task
 import pprint
 import os
 from aiohttp_client_cache import CachedSession, FileBackend
@@ -79,9 +78,10 @@ async def download_one_subtitle(args, session, tvshow):
 
 async def download_subtitles(args, session):
     # Create a task for each tvshow
-    tasks = [asyncio.create_task(download_one_subtitle(args, session, tvshow))
-             for tvshow in args.tvshows]
-    await gather(*tasks)
+    await asyncio.gather(
+        *[asyncio.create_task(download_one_subtitle(args, session, tvshow))
+          for tvshow in args.tvshows]
+    )
 
 
 async def main():
@@ -91,7 +91,14 @@ async def main():
     cache = FileBackend(cache_name='.addic7ed_cache',
                         expire_after=timedelta(days=1))
     async with CachedSession(cache=cache) as session:
-        await download_subtitles(args, session)
+        try:
+            await download_subtitles(args, session)
+        except BaseException:
+            raise
+        finally:
+            # Make sure the cache is closed, otherwise a deadlock happens.
+            # TODO change this to autoclose=True once available
+            await cache.close()
 
 
 if __name__ == "__main__":
