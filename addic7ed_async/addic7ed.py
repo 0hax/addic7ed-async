@@ -159,6 +159,8 @@ class Addic7ed(object):
         for episode in episodes:
             if episode.number == number:
                 return episode
+            if type(number) == list and episode.number == number[0]:
+                return episode
         raise Exception("No subtitles available for this episode.")
 
     async def get_subtitles_page(self, show, season, episode):
