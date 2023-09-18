@@ -34,6 +34,7 @@ def parse_args():
     parser.add_argument(
             '--check-embedded-subtitles', '-c',
             help='check if language is already embedded in the file',
+            action='store_true',
             default=False)
     parser.add_argument(
             '--force', '-f',
