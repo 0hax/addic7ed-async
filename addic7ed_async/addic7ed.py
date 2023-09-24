@@ -207,7 +207,7 @@ class Addic7ed(object):
 
     async def download_subtitle(self, show_name: str, season_number: int,
                                 episode_number: int, language='French',
-                                prefered_version=None):
+                                release_group=None):
         show = await self.get_show_from_name(show_name)
         episode = await self.find_episode(show, season_number, episode_number)
         subtitles = await self.list_subtitles(show, season_number, episode)
@@ -215,8 +215,8 @@ class Addic7ed(object):
         for subtitle in subtitles:
             if subtitle.language != language:
                 continue
-            if prefered_version and \
-               prefered_version not in subtitle.version:
+            if release_group and \
+               release_group not in subtitle.version:
                 continue
             matching_subtitle = subtitle
             break

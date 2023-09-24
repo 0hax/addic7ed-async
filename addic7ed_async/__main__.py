@@ -39,10 +39,17 @@ def parse_args():
     parser.add_argument(
             '--force', '-f',
             help='override existing subtitles',
+            action='store_true',
             default=False)
+    parser.add_argument(
+        '--ignore-release-group', '-i',
+        help='ignore release group when downloading subtitles (subtitles may not be in sync)',
+        action='store_true',
+        default=False)
     parser.add_argument('tvshows', nargs='+')
 
     return parser.parse_args()
+
 
 async def download_one_subtitle(args, session, tvshow):
     if args.check_embedded_subtitles:
@@ -57,22 +64,30 @@ async def download_one_subtitle(args, session, tvshow):
 
     # TODO check if subtitle is synced using some lib
     # TODO support saving multiple subtitles languages .fr.srt ?
-    addicted = Addic7ed(session)
     guess = guessit(tvshow)
-    srt_file = os.path.splitext(tvshow)[0] + '.srt'
-    if os.path.exists(srt_file) and not args.force:
-        print(f"Local subtitle already present for {tvshow} at {srt_file}")
-        return
-    # TODO handle when prefered_version is not found.
+    for field in ['title', 'season', 'episode']:
+        if not guess.get(field):
+            raise Exception(f'Cant retrieve {field} from {tvshow}')
+
+    if not guess.get('release_group'):
+        if not args.ignore_release_group:
+            raise Exception(f'Cant retrieve release group for {tvshow}')
+        else:
+            print('Missing release group but ignoring thanks to --ignore-release-group')
+
+    addicted = Addic7ed(session)
+    # TODO handle when release_group is not found.
     #  Add a way to override it?
     subtitle = await addicted.download_subtitle(
-                    guess['title'], guess['season'], guess['episode'],
-                    language=args.language,
-                    prefered_version=guess['release_group']
-              )
+        guess['title'], guess['season'], guess['episode'],
+        language=args.language,
+        release_group=None if args.ignore_release_group else guess.get('release_group')
+    )
     if not subtitle:
-        return
+        raise Exception(f'No subtitle found for {tvshow}')
+
     print(f'Subtitle downloaded for {tvshow}')
+    srt_file = os.path.splitext(tvshow)[0] + '.srt'
     with open(srt_file, 'wb') as f:
         f.write(subtitle)
 
