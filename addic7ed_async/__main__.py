@@ -78,12 +78,19 @@ async def download_one_subtitle(args, session, tvshow):
 
 
 async def download_subtitles(args, session):
-    # Create a task for each tvshow
-    await asyncio.gather(
-        *[asyncio.create_task(download_one_subtitle(args, session, tvshow))
-          for tvshow in args.tvshows]
-    )
+    tasks = []
+    for tvshow in args.tvshows:
+        srt_file = os.path.splitext(tvshow)[0] + '.srt'
+        if os.path.exists(srt_file) and not args.force:
+            print(f"Local subtitle already present for {tvshow} at {srt_file}")
+            continue
+        tasks.append(asyncio.create_task(download_one_subtitle(args, session, tvshow)))
 
+    # Create a task for each tvshow
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    for result in results:
+        if result:
+            print(result)
 
 async def main():
     args = parse_args()
