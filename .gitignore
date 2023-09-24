@@ -8,8 +8,10 @@ redirects.sqlite
 # Distribution / packaging
 build/
 lib/*
+dist/*
+addic7ed_async.egg-info/*
 
 # Environments
 #pyvenv.cfg
-#bin/*
+bin/*
 
