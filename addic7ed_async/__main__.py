@@ -87,15 +87,11 @@ async def download_subtitles(args, session):
 
 async def main():
     args = parse_args()
-    # TODO Add flush cache option and recommend it in case of exception
-    # 1 day for clearing is ok.
     cache = FileBackend(cache_name='.addic7ed_cache',
                         expire_after=timedelta(days=1))
     async with CachedSession(cache=cache) as session:
         try:
             await download_subtitles(args, session)
-        except BaseException:
-            raise
         finally:
             # Make sure the cache is closed, otherwise a deadlock happens.
             # TODO change this to autoclose=True once available
