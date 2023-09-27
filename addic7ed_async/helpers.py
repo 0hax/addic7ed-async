@@ -1,5 +1,4 @@
-import re
-
+import iso639
 
 async def get_sub_lang_from_file(tvshow):
     try:
@@ -19,9 +18,6 @@ async def get_sub_lang_from_file(tvshow):
 
 async def lang_in_list(embedded_langs, requested_lang):
     for lang in embedded_langs:
-        # Usually 2 first letters are enough to match against ISO
-        # 3166-2 standards.
-        if re.match(r"{}?".format(requested_lang[0:2]),
-                    lang, re.IGNORECASE):
+        if iso639.Language.match('lang') == requested_lang:
             return True
     return False

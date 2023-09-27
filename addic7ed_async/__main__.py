@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import iso639
 import pprint
 import os
 from aiohttp_client_cache import CachedSession, FileBackend
@@ -12,25 +13,7 @@ from guessit import guessit
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--language', '-l',
-                        help='language used to download subtitles',
-                        choices=['Arabic',
-                                 'Catala',
-                                 'English',
-                                 'Euskera',
-                                 'French',
-                                 'Galician',
-                                 'German',
-                                 'Greek',
-                                 'Hungarian',
-                                 'Italian',
-                                 'Persian',
-                                 'Polish',
-                                 'Portuguese',
-                                 'Romanian',
-                                 'Russian',
-                                 'Spanish',
-                                 'Swedish',
-                                 ])
+                        help='language used to download subtitles')
     parser.add_argument(
             '--check-embedded-subtitles', '-c',
             help='check if language is already embedded in the file',
@@ -48,7 +31,10 @@ def parse_args():
         default=False)
     parser.add_argument('tvshows', nargs='+')
 
-    return parser.parse_args()
+    args = parser.parse_args()
+    # Convert language to Language object.
+    args.language = iso639.Language.match(args.language)
+    return args
 
 
 async def download_one_subtitle(args, session, tvshow):

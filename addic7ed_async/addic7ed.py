@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 from collections import namedtuple
 from typing import List
+import iso639
 import os
 import pprint
 import re
@@ -206,14 +207,18 @@ class Addic7ed(object):
         return await response.read()
 
     async def download_subtitle(self, show_name: str, season_number: int,
-                                episode_number: int, language='French',
+                                episode_number: int, language: iso639.Language,
                                 release_group=None):
         show = await self.get_show_from_name(show_name)
         episode = await self.find_episode(show, season_number, episode_number)
         subtitles = await self.list_subtitles(show, season_number, episode)
         matching_subtitle = None
         for subtitle in subtitles:
-            if subtitle.language != language:
+            try:
+                if iso639.Language.match(subtitle.language) != language:
+                    continue
+            except iso639.LanguageNotFoundError as e:
+                print(e)
                 continue
             if release_group and \
                release_group not in subtitle.version:
