@@ -1,3 +1,19 @@
-[build-system]
-requires = ["setuptools", "build"]
-build-backend = "setuptools.build_meta"
+[project]
+name = "addic7ed-async"
+version = "0.0.1"
+description = "async addic7ed.com subtitles downloader"
+dependencies = [
+	"aiohttp-client-cache[filesystem]",
+	"beautifulsoup4",
+	"guessit",
+	"html5lib",
+	"python-iso639"
+]
+
+# Disable auto discovery to be able to install from a virtualenv.
+# Otherwise "lib/" of the virtualenv is auto discovered.
+[tool.setuptools]
+packages = ["addic7ed_async"]
+
+[project.scripts]
+addic7ed-async = "addic7ed_async:__main__.sync_main"
