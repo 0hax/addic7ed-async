@@ -12,13 +12,18 @@ This program only run on python >= 3.0 and try to use modern libraries.
 
 
 ## Installation
+### From pip
+`pip install addic7ed-async`
 
+### From source
 Using a virtualenv is recommended. Installation can done using:
-`python setup.py install`
+`pip install .`
+
 
 ## Usage
 
 ### CLI Usage
 
-### Library usage
-python -m build .
+```
+addic7ed-async -l fr a_tvshow.mkv
+```
