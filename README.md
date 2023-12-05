@@ -12,10 +12,12 @@ This program only run on python >= 3.0 and try to use modern libraries.
 
 
 ## Installation
-### From pip
+### From pip (Soon)
+When it will be uploaded, that would be
 `pip install addic7ed-async`
+For now, please install from sources.
 
-### From source
+### From sources
 Using a virtualenv is recommended. Installation can done using:
 `pip install .`
 
